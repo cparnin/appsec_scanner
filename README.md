@@ -1,15 +1,15 @@
 # AppSec AI Scanner
 
-Automated security scanning that integrates:
+An automated security scanner that:
 
-- Semgrep for static analysis  
-- Gitleaks for secrets detection  
-- OpenAI GPT-4o for AI-powered remediation  
-- Generates PR comments and an HTML report
+- Runs Semgrep for static code analysis
+- Runs Gitleaks for secrets detection
+- Uses OpenAI GPT-4o for AI-powered remediation
+- Generates an HTML report and a pull request comment
 
 ---
 
-## 🔧 Quickstart (Local)
+## Quickstart (Local)
 
 ```bash
 git clone https://github.com/cparnin/appsec_scanner.git
@@ -20,27 +20,31 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 cp .env.example .env
-Set your .env:
+```
 
-env
-Copy
-Edit
-OPENAI_API_KEY=your_openai_key_here
-Run the scanner:
+Edit `.env` and add your API key:
 
-bash
-Copy
-Edit
-python cli.py --repo ../your-code-repo/ --scan all
-📁 Project Layout
-Copy
-Edit
+```env
+OPENAI_API_KEY=sk-...
+```
+
+Then run it:
+
+```bash
+python cli.py --repo ../your-target-repo --scan all
+```
+
+---
+
+## Project Structure
+
+```
 .
 ├── cli.py
 ├── scanner/
-│   ├── ai.py
-│   ├── gitleaks.py
 │   ├── semgrep.py
+│   ├── gitleaks.py
+│   ├── ai.py
 │   ├── report.py
 │   └── templates/
 │       └── report.html.j2
@@ -48,12 +52,17 @@ Edit
 ├── pr-findings.txt
 ├── requirements.txt
 └── .env.example
-🚀 GitHub PR Integration
-Add this file to .github/workflows/appsec-pr-comment.yml in your target repo (like juice-shop-fork):
+```
 
-yaml
-Copy
-Edit
+---
+
+## GitHub PR Automation
+
+In your target repo (like juice-shop-fork), create this file:
+
+`.github/workflows/appsec-pr-comment.yml`
+
+```yaml
 name: AppSec PR Scan
 
 on:
@@ -70,49 +79,54 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install scanner & deps
+      - name: Install tools
         run: |
           curl -sL https://github.com/returntocorp/semgrep/releases/latest/download/semgrep-linux-amd64 -o semgrep
           chmod +x semgrep && sudo mv semgrep /usr/local/bin/
           pip install openai requests jinja2 python-dotenv
 
-      - name: Run scan
+      - name: Run scanner
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python cli.py --repo . --scan all
 
-      - name: Comment PR
+      - name: Comment on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: pr-findings.txt
-Then go to Settings > Secrets > Actions in GitHub and add:
+```
 
-ini
-Copy
-Edit
-OPENAI_API_KEY=sk-...
-👥 DevSecOps Guild Setup
-Clone this repo
+Also go to `Settings > Secrets > Actions` in that repo and add:
 
-Create a .env file from .env.example
+```
+OPENAI_API_KEY = sk-...
+```
 
-Use your own OpenAI API key
+---
 
-Run locally or use PR integration
+## Team Setup (DevSecOps Guild)
 
-Good targets: Juice Shop, DVWA, or your own codebases
+- Clone this repo
+- Create `.env` using the `.env.example` template
+- Add OpenAI key
+- Run manually or via GitHub Action
+- Test it on DVWA, Juice Shop, or your apps
 
-What Happens on PRs?
-Semgrep + Gitleaks run
+---
 
-GPT-4o suggests fixes
+## What Happens When a PR Is Opened?
 
-pr-findings.txt is posted as a PR comment
+1. GitHub Action triggers
+2. Semgrep and Gitleaks run
+3. GPT-4o suggests fixes
+4. A PR comment is posted
+5. HTML report is generated
 
-report.html is generated
+---
 
-Questions?
-Owner: @cparnin
+## Maintainer
+
+[@cparnin](https://github.com/cparnin)
 
 Pull requests welcome.
