@@ -1,5 +1,5 @@
 🔐 AppSec AI Scanner
-An automated security scanning tool that integrates:
+An automated security scanning tool integrating:
 
 ✅ Semgrep for static code analysis
 
@@ -10,9 +10,14 @@ An automated security scanning tool that integrates:
 📄 Generates an HTML report and posts actionable comments on pull requests
 
 🚀 Quickstart (Local Development)
+1. Set Up the Environment
 bash
 Copy
 Edit
+# Clone the repository
+git clone https://github.com/cparnin/appsec_scanner.git
+cd appsec_scanner
+
 # Set up a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
@@ -22,7 +27,13 @@ pip install -r requirements.txt
 
 # Copy the environment variable template and add your OpenAI API key
 cp .env.example .env
-Run the Scanner
+Edit the .env file and add your OpenAI API key:
+
+env
+Copy
+Edit
+OPENAI_API_KEY=your_openai_api_key_here
+2. Run the Scanner
 bash
 Copy
 Edit
@@ -124,52 +135,6 @@ Reporting:
 A pr-findings.txt file is generated and posted as a PR comment.
 
 A report.html file is created for detailed review.
-
-🧹 Code Comments for Team Collaboration
-To enhance readability and maintainability, comprehensive comments have been added to key Python files in your project. Here's an example for cli.py:
-
-python
-Copy
-Edit
-# cli.py
-
-import argparse
-from scanner import semgrep, gitleaks, ai, report
-
-def main():
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Run AppSec AI Scanner")
-    parser.add_argument("--repo", required=True, help="Path to the target repository")
-    parser.add_argument("--scan", choices=["semgrep", "gitleaks", "all"], default="all", help="Specify which scans to run")
-    args = parser.parse_args()
-
-    # Run Semgrep scan
-    if args.scan in ["semgrep", "all"]:
-        semgrep_results = semgrep.run(args.repo)
-    else:
-        semgrep_results = []
-
-    # Run Gitleaks scan
-    if args.scan in ["gitleaks", "all"]:
-        gitleaks_results = gitleaks.run(args.repo)
-    else:
-        gitleaks_results = []
-
-    # Combine results
-    findings = semgrep_results + gitleaks_results
-
-    # Generate AI remediation suggestions
-    ai_remediations = ai.generate(findings)
-
-    # Generate HTML report
-    report.generate_html(findings, ai_remediations)
-
-    # Generate PR findings text
-    report.generate_pr_findings(findings, ai_remediations)
-
-if __name__ == "__main__":
-    main()
-Similar comments have been added to ai.py, report.py, and other relevant files to facilitate understanding and collaboration among team members.
 
 📫 Questions?
 For any questions or contributions, please contact @cparnin.
