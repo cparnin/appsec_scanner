@@ -1,16 +1,15 @@
-# 🔐 AppSec AI Scanner
-
+🔐 AppSec AI Scanner
 An automated security scanning tool integrating:
 
-- Semgrep for static code analysis
+✅ Semgrep for static code analysis
 
-- Gitleaks for secrets detection
+✅ Gitleaks for secrets detection
 
-- OpenAI (GPT-4o) for AI-powered remediation suggestions
+🤖 OpenAI (GPT-4o) for AI-powered remediation suggestions
 
-- Generates an HTML report and posts actionable comments on pull requests
+📄 Generates an HTML report and posts actionable comments on pull requests
 
-Quickstart (Local Development)
+🚀 Quickstart (Local Development)
 1. Set Up the Environment
 bash
 Copy
@@ -139,3 +138,4 @@ A report.html file is created for detailed review.
 
 📫 Questions?
 For any questions or contributions, please contact @cparnin.
+
