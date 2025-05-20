@@ -1,17 +1,15 @@
-# 🔐 AppSec AI Scanner
+# AppSec AI Scanner
 
-An automated security scanning tool that integrates:
+Automated security scanning that integrates:
 
-- ✅ **Semgrep** for static code analysis  
-- ✅ **Gitleaks** for secrets detection  
-- 🤖 **OpenAI GPT-4o** for AI-powered remediation suggestions  
-- 📄 Generates an HTML report and PR comment with fixes  
+- Semgrep for static analysis  
+- Gitleaks for secrets detection  
+- OpenAI GPT-4o for AI-powered remediation  
+- Generates PR comments and an HTML report
 
 ---
 
-## 🚀 Quickstart
-
-### 1. Clone & Setup
+## 🔧 Quickstart (Local)
 
 ```bash
 git clone https://github.com/cparnin/appsec_scanner.git
@@ -22,49 +20,41 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 cp .env.example .env
-Update your .env file:
+Set your .env:
 
 env
 Copy
 Edit
-OPENAI_API_KEY=your_openai_api_key_here
-2. Run Locally
+OPENAI_API_KEY=your_openai_key_here
+Run the scanner:
+
 bash
 Copy
 Edit
-python cli.py --repo ../your-repo/ --scan all
-This generates:
-
-pr-findings.txt – used for PR comments
-
-reports/report.html – visual report
-
-🛠 Project Structure
-graphql
+python cli.py --repo ../your-code-repo/ --scan all
+📁 Project Layout
 Copy
 Edit
 .
-├── cli.py                  # Main CLI entry point
-├── scanner/                # All scanning logic
-│   ├── semgrep.py
-│   ├── gitleaks.py
+├── cli.py
+├── scanner/
 │   ├── ai.py
+│   ├── gitleaks.py
+│   ├── semgrep.py
 │   ├── report.py
 │   └── templates/
 │       └── report.html.j2
-├── reports/                # Output reports
-├── pr-findings.txt         # Summary posted in PRs
+├── reports/
+├── pr-findings.txt
 ├── requirements.txt
-└── .env.example            # API key template
-🔑 GitHub Actions Integration
-To scan PRs automatically, create this workflow in your target repo (e.g. juice-shop-fork):
-
-.github/workflows/appsec-pr-comment.yml
+└── .env.example
+🚀 GitHub PR Integration
+Add this file to .github/workflows/appsec-pr-comment.yml in your target repo (like juice-shop-fork):
 
 yaml
 Copy
 Edit
-name: AppSec LLM Scanner
+name: AppSec PR Scan
 
 on:
   pull_request:
@@ -80,49 +70,49 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install tools
+      - name: Install scanner & deps
         run: |
           curl -sL https://github.com/returntocorp/semgrep/releases/latest/download/semgrep-linux-amd64 -o semgrep
           chmod +x semgrep && sudo mv semgrep /usr/local/bin/
           pip install openai requests jinja2 python-dotenv
 
-      - name: Run scanner
+      - name: Run scan
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python cli.py --repo . --scan all
 
-      - name: PR comment
+      - name: Comment PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: pr-findings.txt
-Then in GitHub > Settings > Secrets > Actions, add:
+Then go to Settings > Secrets > Actions in GitHub and add:
 
 ini
 Copy
 Edit
-OPENAI_API_KEY = sk-...
-👥 Team Setup (DevSecOps Guild)
+OPENAI_API_KEY=sk-...
+👥 DevSecOps Guild Setup
 Clone this repo
 
-Set up .env with an OpenAI key (use .env.example)
+Create a .env file from .env.example
 
-Run locally or use the GitHub workflow
+Use your own OpenAI API key
 
-Works great with vulnerable repos like Juice Shop or DVWA
+Run locally or use PR integration
 
-✅ What Happens on PR
-When someone opens a pull request:
+Good targets: Juice Shop, DVWA, or your own codebases
 
-🛡 Semgrep and Gitleaks scan the code
+What Happens on PRs?
+Semgrep + Gitleaks run
 
-🧠 GPT-4o suggests secure fixes
+GPT-4o suggests fixes
 
-🗒 PR comment is posted with issues + AI remediation
+pr-findings.txt is posted as a PR comment
 
-📊 HTML report is generated for reviewers
+report.html is generated
 
-🤝 Contribute
-Pull requests welcome. Make security better for everyone.
+Questions?
+Owner: @cparnin
 
-Maintainer: @cparnin
+Pull requests welcome.
