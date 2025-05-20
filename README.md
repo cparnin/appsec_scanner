@@ -119,7 +119,7 @@ OPENAI_API_KEY = sk-...
 
 1. GitHub Action triggers
 2. Semgrep and Gitleaks run
-3. GPT-4o suggests fixes
+3. GPT-4o-mini suggests fixes
 4. A PR comment is posted
 5. HTML report is generated
 
