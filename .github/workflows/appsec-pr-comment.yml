@@ -1,0 +1,62 @@
+name: AppSec PR Scan
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  AppSec_PR_Scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Python & Dependencies
+        run: |
+          pip install semgrep openai requests jinja2 python-dotenv
+          semgrep --version
+
+      - name: Install Gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_$(uname -s)_$(uname -m).tar.gz | tar -xz
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks version
+
+      - name: Run AppSec Scanner
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Running in directory: $(pwd)"
+          cd src
+          python cli.py --repo .. --scan semgrep
+          echo "Files created:"
+          ls -la ../outputs/pr-findings.txt || echo "pr-findings.txt not found"
+          ls -la ../outputs/ || echo "outputs directory not found"
+        continue-on-error: true
+
+      - name: Debug Output
+        run: |
+          echo "=== Current Directory ==="
+          pwd
+          echo "=== All Files ==="
+          ls -la
+          echo "=== PR Findings Content ==="
+          if [ -f outputs/pr-findings.txt ]; then
+            cat outputs/pr-findings.txt
+          else
+            echo "Creating fallback pr-findings.txt"
+            echo "## Security Scan Results" > outputs/pr-findings.txt
+            echo "Scanner completed but no findings file was created." >> outputs/pr-findings.txt
+            echo "Check the logs above for details." >> outputs/pr-findings.txt
+          fi
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: outputs/pr-findings.txt
+        if: always()

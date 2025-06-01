@@ -1,9 +1,18 @@
+# Core dependencies
 semgrep>=1.0.0
 jinja2>=3.0.0
 openai>=1.0.0
 python-dotenv>=0.19.0
 requests>=2.26.0
+
+# Optional dependencies (for Phase 2)
+boto3>=1.26.0  # For Amazon Bedrock integration
+gitpython>=3.1.0  # For Git operations
+
+# Development dependencies
 typing-extensions>=4.0.0
-pathlib>=1.0.1
-gitpython>=3.1.0
-# Gitleaks, Syft, Trivy must be installed separately as CLI tools (not pip)
+
+# Note: External tools must be installed separately:
+# - Gitleaks (secret scanning): https://github.com/gitleaks/gitleaks
+# - Syft (SBOM generation): https://github.com/anchore/syft  
+# - Trivy (vulnerability scanning): https://github.com/aquasecurity/trivy
