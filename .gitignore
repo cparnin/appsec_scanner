@@ -18,4 +18,4 @@ archive/
 .env.*
 # System files
 .DS_Store
-Thumbs.db
+Thumbs.dboutputs/
