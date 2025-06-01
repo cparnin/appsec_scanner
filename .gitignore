@@ -19,3 +19,6 @@ archive/
 # System files
 .DS_Store
 Thumbs.dboutputs/
+
+# Generated reports
+outputs/
