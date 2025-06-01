@@ -8,7 +8,7 @@ An AI-powered security scanner that delivers immediate business value:
 - **Executive Reports**: Leadership-ready summaries with transparent ROI
 - **GitHub Integration**: Automated PR comments with AI suggestions
 
-**Perfect for ImagineX client demos and internal security automation.**
+**Ready for demos and internal security automation.**
 
 ---
 
@@ -207,7 +207,7 @@ Perfect for ImagineX Security Guild:
 - GitHub PR automation
 
 **Phase 2** (Future):
-- AWS Bedrock integration
+- AWS Bedrock integration?
 - Custom AI prompts
 - Jira ticket creation
 - Slack notifications
@@ -217,7 +217,7 @@ Perfect for ImagineX Security Guild:
 
 ## 🤝 Contributing
 
-This project is designed for ImagineX Security Guild collaboration:
+This project is designed for ImagineX DevSecOps Guild collaboration:
 
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/scanner-name`
