@@ -27,13 +27,18 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
           gitleaks version
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy version
+
       - name: Run AppSec Scanner
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           echo "Running in directory: $(pwd)"
           cd src
-          python cli.py --repo .. --scan semgrep
+          python cli.py --repo .. --scan all
           echo "Files created:"
           ls -la ../outputs/pr-findings.txt || echo "pr-findings.txt not found"
           ls -la ../outputs/ || echo "outputs directory not found"
@@ -50,6 +55,7 @@ jobs:
             cat outputs/pr-findings.txt
           else
             echo "Creating fallback pr-findings.txt"
+            mkdir -p outputs
             echo "## Security Scan Results" > outputs/pr-findings.txt
             echo "Scanner completed but no findings file was created." >> outputs/pr-findings.txt
             echo "Check the logs above for details." >> outputs/pr-findings.txt

@@ -4,21 +4,25 @@ __pycache__/
 *.egg-info/
 .venv/
 env/
+
 # IDE
 .vscode/
 .idea/
+
 # Reports, temp, logs
 reports/
 *.log
 *.db
 *.sqlite
 archive/
+
 # Environment/config
 .env
 .env.*
+
 # System files
 .DS_Store
-Thumbs.dboutputs/
+Thumbs.db
 
 # Generated reports
 outputs/
