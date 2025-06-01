@@ -1,0 +1,159 @@
+# Cursor AI IDE Rules for AppSec Scanner Project
+
+## Project Context
+This is an AI-powered security scanner built for the Imagine X Security Guild. It combines:
+- Automated security scanning (Semgrep, Gitleaks, SCA)
+- AI-powered remediation suggestions (OpenAI/Bedrock)
+- GitHub Actions integration for PR automation
+- Modular architecture for easy extension
+
+## Code Style & Standards
+
+### Python
+- Use type hints for all function parameters and returns
+- Follow PEP 8 with 88-character line limit (Black formatter)
+- Use docstrings for all public functions and classes
+- Prefer f-strings for string formatting
+- Use pathlib for file operations
+
+### Security Focus
+- Always validate user inputs
+- Use parameterized queries/commands (no shell=True)
+- Sanitize file paths and prevent directory traversal
+- Log security-relevant events
+- Handle secrets securely (environment variables only)
+
+### Error Handling
+- Use specific exception types, not bare except
+- Log errors with context for debugging
+- Fail securely (don't expose sensitive info in errors)
+- Provide helpful error messages for users
+
+## Architecture Patterns
+
+### Scanner Modules
+When creating new scanner integrations:
+```python
+def run_scanner(repo_path: str) -> List[Dict[str, Any]]:
+    """
+    Standard interface for all security scanners.
+    
+    Args:
+        repo_path: Path to repository to scan
+        
+    Returns:
+        List of findings with standardized format:
+        {
+            'path': str,
+            'line': int,
+            'description': str,
+            'severity': str,
+            'rule_id': str
+        }
+    """
+```
+
+### AI Integration
+- Batch API calls to minimize costs
+- Include context about the vulnerability type
+- Provide actionable, specific remediation steps
+- Handle API failures gracefully
+
+### GitHub Actions
+- Use official actions when possible
+- Cache dependencies for faster runs
+- Provide clear step names and logging
+- Handle secrets securely
+
+## Development Workflow
+
+### Adding New Features
+1. Create feature branch: `feature/scanner-name` or `phase2/enhancement`
+2. Add tests for new functionality
+3. Update documentation
+4. Test with DSVW vulnerable app
+5. Ensure GitHub Action still works
+
+### Testing Strategy
+- Unit tests for individual scanner modules
+- Integration tests for full CLI workflow
+- Test with known vulnerable code (DSVW)
+- Verify GitHub Action functionality
+
+## AI Assistant Guidelines
+
+### When Helping with Code
+- Prioritize security best practices
+- Suggest modular, extensible solutions
+- Include error handling and logging
+- Provide clear documentation
+- Consider performance implications
+
+### When Adding Security Tools
+- Follow the established scanner interface
+- Normalize output format
+- Handle tool installation/dependencies
+- Add appropriate CLI options
+- Update GitHub workflow if needed
+
+### When Working with AI APIs
+- Implement retry logic with exponential backoff
+- Batch requests when possible
+- Handle rate limiting gracefully
+- Provide fallback behavior
+- Monitor costs and usage
+
+## Common Patterns
+
+### File Operations
+```python
+from pathlib import Path
+
+def safe_file_read(file_path: str) -> str:
+    """Safely read file with proper error handling."""
+    try:
+        path = Path(file_path).resolve()
+        # Validate path is within expected directory
+        return path.read_text(encoding='utf-8')
+    except (FileNotFoundError, PermissionError) as e:
+        logger.error(f"Failed to read {file_path}: {e}")
+        raise
+```
+
+### Subprocess Execution
+```python
+import subprocess
+from typing import List
+
+def run_command(cmd: List[str], cwd: str = None) -> subprocess.CompletedProcess:
+    """Safely execute command without shell injection."""
+    try:
+        return subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=300  # 5 minute timeout
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command failed: {' '.join(cmd)}, Error: {e.stderr}")
+        raise
+```
+
+## Guild Collaboration Notes
+
+- This project is designed for team development
+- Modular architecture allows parallel development
+- Test environment (DSVW) included for validation
+- GitHub Actions provide immediate feedback
+- Documentation should be kept current
+
+## Performance Considerations
+
+- Scanner tools can be CPU/memory intensive
+- AI API calls have latency and cost implications
+- GitHub Actions have time limits (6 hours max)
+- Large repositories may need chunked processing
+
+Remember: Security is the primary concern, but developer experience is crucial for adoption. 

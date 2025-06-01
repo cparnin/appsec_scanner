@@ -4,7 +4,7 @@ An automated security scanner that:
 
 - Runs Semgrep for static code analysis
 - Runs Gitleaks for secrets detection
-- Uses OpenAI GPT-4o for AI-powered remediation
+- Uses OpenAI GPT-4o-mini for AI-powered remediation
 - Generates an HTML report and a pull request comment
 
 ---
@@ -58,7 +58,7 @@ python cli.py --repo ../your-target-repo --scan all
 
 ## GitHub PR Automation
 
-In your target repo (like juice-shop-fork), create this file:
+In your target repo, create this file:
 
 `.github/workflows/appsec-pr-comment.yml`
 
@@ -108,10 +108,10 @@ OPENAI_API_KEY = sk-...
 ## Team Setup (DevSecOps Guild)
 
 - Clone this repo
-- Create `.env` using the `.env.example` template
+- Create `.env` with OPENAI API key
 - Add OpenAI key
 - Run manually or via GitHub Action
-- Test it on DVWA, Juice Shop, or your apps
+- Test it on DVWA, DSVWA, or your apps
 
 ---
 
