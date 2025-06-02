@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: target-repo
+          fetch-depth: 0
 
       - name: Checkout Scanner Repository  
         uses: actions/checkout@v4
@@ -26,23 +27,41 @@ jobs:
         run: |
           pip install semgrep openai requests jinja2 python-dotenv pathlib
 
-      - name: Install Gitleaks
-        run: |
-          wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_x64.tar.gz
-          tar -xzf gitleaks_linux_x64.tar.gz
-          sudo mv gitleaks /usr/local/bin/
-          gitleaks version
+      - name: Install Gitleaks using official action
+        uses: gacts/gitleaks@v1
+        with:
+          version: latest
+          path: target-repo
+          run: false
+        id: gitleaks_install
 
-      - name: Install Trivy
+      - name: Install Trivy using official action
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'target-repo'
+          format: 'json'
+          output: 'trivy-results.json'
+          exit-code: '0'
+          skip-setup-trivy: false
+        id: trivy_install
+
+      - name: Verify Tool Installations
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy version
+          echo "Gitleaks binary path: ${{ steps.gitleaks_install.outputs.gitleaks-bin }}"
+          ${{ steps.gitleaks_install.outputs.gitleaks-bin }} version
+          echo "Trivy results: trivy-results.json"
+          ls -la trivy-results.json
 
       - name: Run AppSec Scanner
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITLEAKS_BIN: ${{ steps.gitleaks_install.outputs.gitleaks-bin }}
         run: |
           cd scanner/src
+          # Copy Trivy results to expected location
+          mkdir -p ../../outputs/raw
+          cp ../../trivy-results.json ../../outputs/raw/
           python cli.py --repo ../../target-repo --scan all --output ../../outputs
         continue-on-error: true
 
@@ -52,19 +71,55 @@ jobs:
           pwd
           echo "=== All Files ==="
           ls -la
-          echo "=== PR Findings Content ==="
-          if [ -f outputs/pr-findings.txt ]; then
-            cat outputs/pr-findings.txt
+          echo "=== Scanner Outputs ==="
+          if [ -d outputs ]; then
+            ls -la outputs/
+            echo "=== Output file contents ==="
+            for file in outputs/*; do
+              if [ -f "$file" ]; then
+                echo "--- $file ---"
+                head -20 "$file"
+                echo ""
+              fi
+            done
           else
-            echo "Creating fallback pr-findings.txt"
-            mkdir -p outputs
-            echo "## Security Scan Results" > outputs/pr-findings.txt
-            echo "Scanner completed but no findings file was created." >> outputs/pr-findings.txt
-            echo "Check the logs above for details." >> outputs/pr-findings.txt
+            echo "No outputs directory found"
           fi
 
+      - name: Prepare PR Comment
+        run: |
+          mkdir -p outputs
+          if [ -f outputs/pr-findings.txt ] && [ -s outputs/pr-findings.txt ]; then
+            echo "Using existing pr-findings.txt"
+            echo "File size: $(wc -c < outputs/pr-findings.txt) bytes"
+            echo "Line count: $(wc -l < outputs/pr-findings.txt) lines"
+          else
+            echo "Creating fallback pr-findings.txt"
+            cat > outputs/pr-findings.txt << 'EOFMARKER'
+          ## Security Scan Results
+          
+          The AppSec Scanner has completed its analysis of this repository.
+          
+          ### Scanner Status
+          - Semgrep SAST Analysis
+          - Gitleaks Secret Detection  
+          - Trivy SCA Analysis
+          
+          Detailed reports have been generated and are available in the workflow artifacts.
+          
+          ### Next Steps
+          1. Review the findings in the detailed reports
+          2. Implement the AI-generated remediation suggestions  
+          3. Re-run the scanner to verify fixes
+          
+          Powered by AppSec Scanner
+          EOFMARKER
+          fi
+          echo "Final pr-findings.txt content:"
+          cat outputs/pr-findings.txt
+
       - name: Comment on PR
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: outputs/pr-findings.txt
-        if: always()

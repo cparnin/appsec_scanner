@@ -1,5 +1,6 @@
 import subprocess
 import json
+import os
 from pathlib import Path
 import logging
 
@@ -24,10 +25,13 @@ def run_gitleaks(repo_path: str, output_dir: Path = None) -> list:
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / "gitleaks.json"
         
+        # Get Gitleaks binary path from environment variable or use default
+        gitleaks_bin = os.environ.get('GITLEAKS_BIN', 'gitleaks')
+        
         # Run Gitleaks with custom config and output JSON results
         config_path = Path(__file__).parent.parent.parent / "configs" / ".gitleaks.toml"
         cmd = [
-            "gitleaks", "detect",
+            gitleaks_bin, "detect",
             "--source", repo_path,
             "--config", str(config_path),
             "--report-format", "json",
