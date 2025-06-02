@@ -257,14 +257,15 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
     """
     
     def should_include_in_pr(finding, tool):
-        """More restrictive filtering for PR comments to avoid overwhelming developers"""
-        # Always include secrets from Gitleaks (they're always critical)
+        """Ultra-restrictive filtering for PR comments to avoid overwhelming developers"""
+        # Always include secrets from Gitleaks (they're always actionable)
         if tool == 'gitleaks':
             return True
             
-        # For other tools, only include critical and high severity
+        # For other tools, only include CRITICAL severity (not high)
+        # This keeps PR comments focused on the most urgent issues
         severity = (finding.get('extra', {}).get('severity') or finding.get('severity', '')).lower()
-        return severity in ['critical', 'high']
+        return severity == 'critical'
     
     # Apply PR-specific filtering
     pr_filtered_results = {}
@@ -275,7 +276,7 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
             pr_filtered_results[tool] = pr_findings
             total_pr_findings += len(pr_findings)
             if len(pr_findings) < len(findings):
-                print(f"📝 PR Comment: {tool.capitalize()} showing {len(pr_findings)}/{len(findings)} findings (critical/high + secrets only)")
+                print(f"📝 PR Comment: {tool.capitalize()} showing {len(pr_findings)}/{len(findings)} findings (critical + secrets only)")
         else:
             pr_filtered_results[tool] = findings
     
@@ -308,7 +309,7 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
         f"**💰 Value:** ${cost_savings:,.0f} in productivity gains",
         "",
         f"**🔍 Repository:** {repo_path}",
-        f"**📊 Showing:** {total_pr_findings} critical/high findings (full report has {total_findings} total issues)",
+        f"**📊 Showing:** {total_pr_findings} critical + secrets findings (full report has {total_findings} total issues)",
         ""
     ]
     
@@ -317,7 +318,7 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
         summary_lines.append(f"## {tool.capitalize()} Findings")
         
         if not findings:
-            summary_lines.append("_No critical/high issues found._")
+            summary_lines.append("_No critical + secrets issues found._")
             continue
             
         for f in findings:
