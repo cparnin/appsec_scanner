@@ -19,6 +19,7 @@
 </head>
 <body>
   <h1>AppSec AI Scan Report</h1>
+  <p><strong>Scanned Repository:</strong> {{ repo_path }}</p>
   <p>This report summarizes code findings and AI remediation suggestions.</p>
 
   {% for tool, findings in results.items() %}
@@ -35,12 +36,14 @@
       </tr>
       {% for f in findings %}
       <tr class="{{ f.get('extra', {}).get('severity', f.get('severity', 'low')).lower() }}">
-        <td>{{ f.get('extra', {}).get('message', f.get('description', 'N/A')) }}</td>
-        <td>{{ f.get('extra', {}).get('severity', f.get('severity', 'N/A')) }}</td>
+        <td>{{ f.get('extra', {}).get('message', f.get('Description', f.get('description', 'N/A'))) }}</td>
+        <td>{{ f.get('extra', {}).get('severity', f.get('severity', f.get('RuleID', 'N/A'))) }}</td>
         <td>
-          {{ f.get('path', f.get('file', 'unknown')) }}
+          {{ f.get('path', f.get('File', f.get('file', 'unknown'))) }}
           {% if f.get('start', {}).get('line') %}
             :{{ f.get('start', {}).get('line') }}
+          {% elif f.get('StartLine') %}
+            :{{ f.get('StartLine') }}
           {% elif f.get('line') %}
             :{{ f.get('line') }}
           {% endif %}

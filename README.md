@@ -94,7 +94,11 @@ appsec_scanner/
 
 ## 🤖 GitHub PR Automation
 
-Create this file in your target repository:
+**Important**: The workflow file goes in the **target repository** (the one being scanned), NOT in this scanner repository.
+
+### Setup Steps:
+
+1. **In the target repository** (the code you want to scan), create this file:
 
 `.github/workflows/appsec-pr-comment.yml`
 
@@ -103,24 +107,29 @@ name: AppSec PR Scan
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, main]
   push:
-    branches: [master]
+    branches: [master, main]
 
 jobs:
   AppSec_PR_Scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Target Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          path: target-repo
+
+      - name: Checkout Scanner Repository  
+        uses: actions/checkout@v4
+        with:
+          repository: cparnin/appsec_scanner
+          path: scanner
 
       - name: Install Python & Dependencies
         run: |
           pip install semgrep openai requests jinja2 python-dotenv
-          semgrep --version
 
       - name: Install Gitleaks
         run: |
@@ -135,8 +144,8 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          cd src
-          python cli.py --repo .. --scan all
+          cd scanner/src
+          python cli.py --repo ../../target-repo --scan all --output ../../outputs
 
       - name: Comment on PR
         uses: marocchino/sticky-pull-request-comment@v2
@@ -145,8 +154,21 @@ jobs:
         if: always()
 ```
 
-Add your OpenAI API key to repository secrets:
-`Settings > Secrets > Actions > OPENAI_API_KEY`
+2. **In the target repository**, add your OpenAI API key:
+   - Go to `Settings > Secrets and Variables > Actions`
+   - Add secret: `OPENAI_API_KEY` = `sk-your-key-here`
+
+3. **That's it!** When PRs are opened, the scanner runs automatically.
+
+### How It Works:
+1. GitHub Action triggers on PR
+2. Checks out the target repo (code to scan) 
+3. Checks out your scanner repo (the tools)
+4. Installs security tools (Semgrep, Gitleaks, Trivy)  
+5. Runs your scanner on the target repo
+6. Posts AI-powered results as PR comment
+
+**Much simpler!** No manual file management, handles all dependencies automatically.
 
 ---
 

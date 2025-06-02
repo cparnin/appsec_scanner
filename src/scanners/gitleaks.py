@@ -5,15 +5,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_gitleaks(repo_path):
+def run_gitleaks(repo_path: str, output_dir: Path = None) -> list:
     """
-    Run Gitleaks secrets scanner on the given repository path.
+    Run Gitleaks scanner on the given repository path.
     Returns a list of findings in standardized format.
+    
+    Args:
+        repo_path: Path to repository to scan
+        output_dir: Directory for output files (defaults to ../outputs/raw)
     """
     try:
-        out_dir = Path("../outputs/raw")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        output_file = out_dir / "gitleaks.json"
+        # Use provided output_dir or default
+        if output_dir is None:
+            output_dir = Path("../outputs/raw")
+        else:
+            output_dir = output_dir / "raw"
+            
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_file = output_dir / "gitleaks.json"
         
         # Run Gitleaks with custom config and output JSON results
         config_path = Path(__file__).parent.parent.parent / "configs" / ".gitleaks.toml"

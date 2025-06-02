@@ -2,24 +2,29 @@ name: AppSec PR Scan
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, main]
   push:
-    branches: [master]
+    branches: [master, main]
 
 jobs:
   AppSec_PR_Scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Target Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          path: target-repo
+
+      - name: Checkout Scanner Repository  
+        uses: actions/checkout@v4
+        with:
+          repository: cparnin/appsec_scanner
+          path: scanner
 
       - name: Install Python & Dependencies
         run: |
           pip install semgrep openai requests jinja2 python-dotenv
-          semgrep --version
 
       - name: Install Gitleaks
         run: |
@@ -36,12 +41,8 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo "Running in directory: $(pwd)"
-          cd src
-          python cli.py --repo .. --scan all
-          echo "Files created:"
-          ls -la ../outputs/pr-findings.txt || echo "pr-findings.txt not found"
-          ls -la ../outputs/ || echo "outputs directory not found"
+          cd scanner/src
+          python cli.py --repo ../../target-repo --scan all --output ../../outputs
         continue-on-error: true
 
       - name: Debug Output

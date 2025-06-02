@@ -9,7 +9,8 @@ env/
 .vscode/
 .idea/
 
-# Reports, temp, logs
+# Generated reports and outputs (scanner results)
+outputs/
 reports/
 *.log
 *.db
@@ -23,6 +24,3 @@ archive/
 # System files
 .DS_Store
 Thumbs.db
-
-# Generated reports
-outputs/

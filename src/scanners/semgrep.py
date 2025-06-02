@@ -50,6 +50,8 @@ def run_semgrep(repo_path: str, output_dir: Path = None) -> list:
         # Parse and return findings from the JSON output
         with open(output_file) as f:
             results = json.load(f).get("results", [])
+        
+        logger.info(f"Semgrep found {len(results)} findings")
         return results
             
     except subprocess.TimeoutExpired:
