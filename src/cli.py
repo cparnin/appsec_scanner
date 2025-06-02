@@ -242,6 +242,10 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
     This creates a markdown file that GitHub Actions can post as a PR comment.
     The format is optimized for developer readability while showing business value.
     
+    For PR comments, we use more restrictive filtering to avoid overwhelming developers:
+    - Semgrep/Trivy: Only critical and high severity issues
+    - Gitleaks: All secrets (always critical)
+    
     Args:
         results: Dictionary of findings by scanner tool
         output_dir: Where to write the pr-findings.txt file
@@ -251,6 +255,29 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
         cost_savings: Dollar value of productivity improvement
         repo_path: Path to the scanned repository
     """
+    
+    def should_include_in_pr(finding, tool):
+        """More restrictive filtering for PR comments to avoid overwhelming developers"""
+        # Always include secrets from Gitleaks (they're always critical)
+        if tool == 'gitleaks':
+            return True
+            
+        # For other tools, only include critical and high severity
+        severity = (finding.get('extra', {}).get('severity') or finding.get('severity', '')).lower()
+        return severity in ['critical', 'high']
+    
+    # Apply PR-specific filtering
+    pr_filtered_results = {}
+    total_pr_findings = 0
+    for tool, findings in results.items():
+        if findings:
+            pr_findings = [f for f in findings if should_include_in_pr(f, tool)]
+            pr_filtered_results[tool] = pr_findings
+            total_pr_findings += len(pr_findings)
+            if len(pr_findings) < len(findings):
+                print(f"📝 PR Comment: {tool.capitalize()} showing {len(pr_findings)}/{len(findings)} findings (critical/high + secrets only)")
+        else:
+            pr_filtered_results[tool] = findings
     
     # Emoji mapping for visual impact in PR comments
     emoji_map = {
@@ -280,15 +307,17 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
         f"**⏱️ Time Saved:** {time_saved:.1f} hours vs manual analysis", 
         f"**💰 Value:** ${cost_savings:,.0f} in productivity gains",
         "",
-        f"**🔍 Repository:** {repo_path}"
+        f"**🔍 Repository:** {repo_path}",
+        f"**📊 Showing:** {total_pr_findings} critical/high findings (full report has {total_findings} total issues)",
+        ""
     ]
     
-    # Add findings from each scanner tool
-    for tool, findings in results.items():
+    # Add findings from each scanner tool (using PR-filtered results)
+    for tool, findings in pr_filtered_results.items():
         summary_lines.append(f"## {tool.capitalize()} Findings")
         
         if not findings:
-            summary_lines.append("_No issues found._")
+            summary_lines.append("_No critical/high issues found._")
             continue
             
         for f in findings:
@@ -304,6 +333,14 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
             summary_lines.append(f"{emoji} **{msg}** in `{file_path}:{line}`")
             summary_lines.append(f"  - 💡 *{ai_fix}*")
         summary_lines.append("")
+    
+    # Add note about full report
+    if total_pr_findings < total_findings:
+        summary_lines.extend([
+            "---",
+            f"📋 **Full Report:** {total_findings - total_pr_findings} additional medium/low findings available in detailed HTML report",
+            ""
+        ])
 
     # Write to file for GitHub Action to pick up
     (output_dir / "pr-findings.txt").write_text("\n".join(summary_lines))
