@@ -157,26 +157,26 @@ jobs:
           
           # Create fallback if needed
           if [ ! -f outputs/pr-findings.txt ] || [ ! -s outputs/pr-findings.txt ]; then
-            cat > outputs/pr-findings.txt << 'EOFMARKER'
-## 🔒 Security Scan Results
+            cat > outputs/pr-findings.txt << 'EOF'
+## Security Scan Results
 
 The AppSec Scanner has completed its analysis of this repository.
 
-### 📊 Scanner Status
-- ✅ Semgrep SAST Analysis
-- ✅ Gitleaks Secret Detection  
-- ✅ Trivy SCA Analysis
+### Scanner Status
+- Semgrep SAST Analysis
+- Gitleaks Secret Detection  
+- Trivy SCA Analysis
 
-### 📝 Results
+### Results
 Detailed security findings have been generated and are available in the workflow artifacts.
 
-### 🔍 Next Steps
+### Next Steps
 1. Review the findings in the detailed reports
 2. Implement the AI-generated remediation suggestions  
 3. Re-run the scanner to verify fixes
 
 Powered by AppSec AI Scanner
-EOFMARKER
+EOF
             echo "📝 Created fallback PR comment"
           fi
           
