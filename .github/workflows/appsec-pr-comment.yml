@@ -59,10 +59,11 @@ jobs:
           GITLEAKS_BIN: ${{ steps.gitleaks_install.outputs.gitleaks-bin }}
         run: |
           cd scanner/src
-          # Copy Trivy results to expected location
-          mkdir -p ../../outputs/raw
-          cp ../../trivy-results.json ../../outputs/raw/
-          python cli.py --repo ../../target-repo --scan all --output ../../outputs
+          # Copy Trivy results to expected location within scanner directory
+          mkdir -p ../outputs/raw
+          cp ../../trivy-results.json ../outputs/raw/
+          # Run scanner with output to scanner/outputs (not ../../outputs)
+          python cli.py --repo ../../target-repo --scan all --output ../outputs
         continue-on-error: true
 
       - name: Debug Output
@@ -71,20 +72,37 @@ jobs:
           pwd
           echo "=== All Files ==="
           ls -la
-          echo "=== Scanner Outputs ==="
+          echo "=== Scanner Outputs (Checking both locations) ==="
           if [ -d scanner/outputs ]; then
             echo "Found scanner/outputs directory"
             ls -la scanner/outputs/
-            echo "=== Output file contents ==="
-            for file in scanner/outputs/*; do
-              if [ -f "$file" ]; then
-                echo "--- $file ---"
-                head -20 "$file"
-                echo ""
-              fi
-            done
+            if [ -d scanner/outputs/raw ]; then
+              echo "Raw scanner files:"
+              ls -la scanner/outputs/raw/
+            fi
           else
             echo "No scanner/outputs directory found"
+          fi
+          
+          if [ -d outputs ]; then
+            echo "Found outputs directory"
+            ls -la outputs/
+            if [ -d outputs/raw ]; then
+              echo "Raw scanner files:"
+              ls -la outputs/raw/
+              echo "=== Scanner Result Summary ==="
+              if [ -f outputs/raw/semgrep.json ]; then
+                echo "Semgrep results: $(wc -l < outputs/raw/semgrep.json) lines"
+              fi
+              if [ -f outputs/raw/gitleaks.json ]; then
+                echo "Gitleaks results: $(wc -l < outputs/raw/gitleaks.json) lines"
+              fi
+              if [ -f outputs/raw/trivy-sca.json ]; then
+                echo "Trivy results: $(wc -l < outputs/raw/trivy-sca.json) lines"
+              fi
+            fi
+          else
+            echo "No outputs directory found"
           fi
 
       - name: Prepare PR Comment
@@ -97,7 +115,14 @@ jobs:
             echo "File size: $(wc -c < outputs/pr-findings.txt) bytes"
             echo "Line count: $(wc -l < outputs/pr-findings.txt) lines"
           else
-            echo "Creating fallback pr-findings.txt (scanner output not found)"
+            echo "Creating fallback pr-findings.txt (scanner output not found or empty)"
+            echo "Checking what we have:"
+            echo "scanner/outputs/ contents:"
+            ls -la scanner/outputs/ 2>/dev/null || echo "No scanner/outputs directory"
+            if [ -d scanner/outputs/raw ]; then
+              echo "Raw files found:"
+              ls -la scanner/outputs/raw/
+            fi
             cat > outputs/pr-findings.txt << 'EOFMARKER'
           ## Security Scan Results
           
@@ -126,3 +151,16 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: outputs/pr-findings.txt
+          # NOTE: This action UPDATES the same comment each time (prevents spam)
+          # If you want separate comments for each run, use this instead:
+          # uses: actions/github-script@v6
+          # with:
+          #   script: |
+          #     const fs = require('fs');
+          #     const comment = fs.readFileSync('outputs/pr-findings.txt', 'utf8');
+          #     github.rest.issues.createComment({
+          #       issue_number: context.issue.number,
+          #       owner: context.repo.owner,
+          #       repo: context.repo.repo,
+          #       body: comment
+          #     });
