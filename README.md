@@ -64,7 +64,7 @@ The scanner provides concrete ROI metrics:
 --output /path/to/dir  # Custom output directory
 ```
 
-## 🔍 Understanding the Output
+##  Understanding the Output
 
 ### PR Comments (GitHub)
 - **Focus**: Critical and secret findings only (avoid developer overwhelm)
@@ -82,7 +82,7 @@ The scanner provides concrete ROI metrics:
 - **Metrics**: Time saved, cost impact, security posture improvement
 
 
-## 📈 Integration Examples
+##  Integration Examples
 
 ### GitHub Actions (Recommended)
 ```yaml
