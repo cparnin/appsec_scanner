@@ -123,13 +123,18 @@ def main():
         
         # Fix output directory path to be relative to script location
         if args.output.startswith("../"):
-            # If relative path, make it relative to this script's directory
-            script_dir = Path(__file__).parent.parent  # Go up from src/ to project root
-            output_dir = (script_dir / args.output.replace("../", "")).resolve()
+            # If relative path, make it relative to script location (not project root)
+            script_dir = Path(__file__).parent  # src/ directory
+            output_dir = (script_dir / args.output).resolve()
         else:
             output_dir = Path(args.output).resolve()
             
-        output_dir.mkdir(exist_ok=True)  # Create output directory if it doesn't exist
+        output_dir.mkdir(parents=True, exist_ok=True)  # Create output directory if it doesn't exist
+        
+        # Debug path information
+        logger.info(f"📁 Script directory: {Path(__file__).parent}")
+        logger.info(f"📁 Output directory: {output_dir}")
+        logger.info(f"📁 Current working directory: {Path.cwd()}")
         
         logger.info("🕵️‍♂️ AppSec Scanner starting...")
         results = {}  # Will store findings from each scanner tool
@@ -344,7 +349,11 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
         ])
 
     # Write to file for GitHub Action to pick up
-    (output_dir / "pr-findings.txt").write_text("\n".join(summary_lines))
+    pr_file_path = output_dir / "pr-findings.txt"
+    logger.info(f"📝 Writing PR findings to: {pr_file_path}")
+    logger.info(f"📝 PR content length: {len('\\n'.join(summary_lines))} characters")
+    pr_file_path.write_text("\\n".join(summary_lines))
+    logger.info(f"📝 File written successfully: {pr_file_path.exists()}")
 
 def _write_executive_summary(results, output_dir, total_findings, ai_suggestions, time_saved, cost_savings, repo_path):
     """
