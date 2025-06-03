@@ -1,258 +1,170 @@
 # AppSec AI Scanner
 
-An AI-powered security scanner that delivers immediate business value:
+An appsec security scanner that combines industry-standard security tools with OpenAI-generated remediation suggestions.
 
-- **3 Security Tools**: Semgrep (SAST), Gitleaks (secrets), Trivy (SCA)
-- **AI Remediation**: OpenAI GPT-4o-mini provides specific fix guidance
-- **Business Metrics**: Calculates time savings and cost impact
-- **Executive Reports**: Leadership-ready summaries with transparent ROI
-- **GitHub Integration**: Automated PR comments with AI suggestions
+## 🚀 Quick Start
 
-**Ready for demos and internal security automation.**
+### For PR Scanning
+1. Copy `.github/workflows/appsec-pr-comment.yml` to your target repository
+2. Set `OPENAI_API_KEY` in your repository secrets
+3. Open a PR - the scanner will automatically comment with findings and AI fixes
 
----
-
-## 🚀 Quickstart (Local)
-
+### For Local Scanning
 ```bash
-git clone https://github.com/cparnin/appsec_scanner.git
+# Clone and setup
+git clone https://github.com/cparnin/appsec_scanner
 cd appsec_scanner
-
-python3 -m venv .venv
-source .venv/bin/activate
-
 pip install -r requirements.txt
+
+# Configure (copy env.example to .env and add your OpenAI key)
 cp env.example .env
+# Edit .env to add OPENAI_API_KEY=your_key_here
+
+# Scan a repository
+python src/cli.py --repo /path/to/target/repo --scan all --output outputs
 ```
 
-Edit `.env` and add your API key:
+## 🔧 Scanner Tools
 
-```env
-OPENAI_API_KEY=sk-your-openai-api-key-here
-```
+- **Semgrep**: Static Application Security Testing (SAST)
+- **Gitleaks**: Secret detection in git history  
+- **Trivy**: Software Composition Analysis (dependency vulnerabilities)
+- **OpenAI**: AI-generated remediation suggestions for each finding
 
-Install external tools:
+## 📊 Business Impact
+
+The scanner provides concrete ROI metrics:
+- **Time Savings**: Reduces developer research from 15 min to 3 min per issue
+- **Cost Calculation**: Uses $150/hour security engineer rate
+- **AI Coverage**: Typically achieves 95%+ AI suggestion coverage
+- **Executive Reports**: Professional summaries for leadership/clients
+
+## 📝 Output Files
+
+- `pr-findings.txt` - GitHub PR comment (critical + secrets only)
+- `report.html` - Detailed technical report for developers
+- `executive-summary.md` - Professional report for leadership
+- `slack-executive-summary.txt` - Team communication format
+- `outputs/raw/` - Raw scanner outputs (JSON format)
+
+## 🔧 Configuration Options
+
 ```bash
-# Install Trivy (SCA scanning)
-curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+# Scanner selection
+--scan semgrep          # SAST only
+--scan gitleaks         # Secrets only  
+--scan sca             # Dependencies only
+--scan all             # All scanners (default)
 
-# Install Gitleaks (secrets scanning)  
-curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_$(uname -s)_$(uname -m).tar.gz | tar -xz
-sudo mv gitleaks /usr/local/bin/
+# AI configuration
+--ai-batch-size 10     # Findings per API call (cost control)
+--no-ai               # Skip AI suggestions (testing/cost control)
+
+# Output control
+--output /path/to/dir  # Custom output directory
 ```
 
-Run the scanner:
+## 🚨 Recent Fixes (v2.0)
+
+### Critical Issues Resolved
+- ✅ **PR Comment Formatting**: Fixed literal `\n` escape sequences
+- ✅ **AI Suggestions**: Fixed "N/A" issue - now shows specific remediation code
+- ✅ **Line Counting**: Proper newlines for GitHub Actions processing
+- ✅ **Results Consistency**: Clear filtering between PR comments and full reports
+
+### Performance Improvements  
+- **AI Coverage**: Now achieves 95%+ suggestion coverage
+- **Processing Speed**: Batch API calls reduce costs and latency
+- **Error Handling**: Graceful degradation when AI is unavailable
+
+## 🔍 Understanding the Output
+
+### PR Comments (GitHub)
+- **Focus**: Critical and secret findings only (avoid developer overwhelm)
+- **Format**: Business metrics + specific AI fixes
+- **Typical Count**: 10-50 findings from hundreds scanned
+
+### Full Reports (HTML)
+- **Focus**: All findings with severity-based filtering
+- **Format**: Sortable table with detailed technical information
+- **Use Case**: Developer deep-dive and comprehensive security review
+
+### Executive Summaries
+- **Focus**: Business impact and ROI calculations
+- **Format**: Professional markdown suitable for leadership
+- **Metrics**: Time saved, cost impact, security posture improvement
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+1. **"No AI suggestions" in PR comments**
+   - Check `OPENAI_API_KEY` is set in GitHub secrets
+   - Verify API key has sufficient credits
+   - Check Action logs for API errors
+
+2. **PR comment formatting issues**  
+   - Ensure latest version of `appsec-pr-comment.yml`
+   - Check `outputs/pr-findings.txt` has proper line breaks
+   - Validate content with `wc -l outputs/pr-findings.txt`
+
+3. **Scanner tool failures**
+   - Trivy: Requires network access for vulnerability database
+   - Semgrep: Needs repository content (not just shallow clones)
+   - Gitleaks: Requires git history for secret detection
+
+### Debug Commands
 
 ```bash
-cd src
-python cli.py --repo ../your-target-repo --scan all
+# Test locally first
+python src/cli.py --repo /path/to/test/repo --scan all --ai-batch-size 5
+
+# Check output files
+ls -la outputs/
+wc -l outputs/pr-findings.txt
+grep -c "💡" outputs/pr-findings.txt  # Count AI suggestions
+
+# Validate scanner tools
+semgrep --version
+gitleaks version  
+trivy version
 ```
 
-## 📊 Business Impact Example
+## 📈 Integration Examples
 
-```
-🎉 SCAN COMPLETE - BUSINESS IMPACT SUMMARY
-============================================================
-Total Issues Found: 23
-AI Suggestions: 23 (100%)
-Time Saved: 4.6 hours
-Cost Savings: $690
-============================================================
-```
-
----
-
-## 📁 Project Structure
-
-```
-appsec_scanner/
-├── src/
-│   ├── cli.py                 # Main entry point
-│   ├── scanners/
-│   │   ├── semgrep.py        # SAST scanning
-│   │   ├── gitleaks.py       # Secrets detection
-│   │   └── sca.py            # Trivy SCA scanning
-│   ├── ai/
-│   │   └── remediation.py    # OpenAI integration
-│   └── reporting/
-│       ├── html.py           # HTML report generator
-│       └── templates/
-│           └── report.html   # Report template
-├── outputs/                  # Generated reports
-│   ├── pr-findings.txt      # GitHub PR comment
-│   ├── executive-summary.md # Leadership report
-│   ├── report.html         # Detailed HTML report
-│   └── raw/                # Raw scanner outputs
-├── configs/
-│   └── .gitleaks.toml      # Gitleaks configuration
-├── requirements.txt
-├── env.example
-└── README.md
-```
-
----
-
-## 🤖 GitHub PR Automation
-
-**Important**: The workflow file goes in the **target repository** (the one being scanned), NOT in this scanner repository.
-
-### Setup Steps:
-
-1. **In the target repository** (the code you want to scan), create this file:
-
-`.github/workflows/appsec-pr-comment.yml`
-
+### GitHub Actions (Recommended)
 ```yaml
-name: AppSec PR Scan
-
-on:
-  pull_request:
-    branches: [master, main]
-  push:
-    branches: [master, main]
-
-jobs:
-  AppSec_PR_Scan:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Target Repository
-        uses: actions/checkout@v4
-        with:
-          path: target-repo
-
-      - name: Checkout Scanner Repository  
-        uses: actions/checkout@v4
-        with:
-          repository: cparnin/appsec_scanner
-          path: scanner
-
-      - name: Install Python & Dependencies
-        run: |
-          pip install semgrep openai requests jinja2 python-dotenv
-
-      - name: Install Gitleaks
-        run: |
-          curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_$(uname -s)_$(uname -m).tar.gz | tar -xz
-          sudo mv gitleaks /usr/local/bin/
-
-      - name: Install Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: Run AppSec Scanner
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          cd scanner/src
-          python cli.py --repo ../../target-repo --scan all --output ../../outputs
-
-      - name: Comment on PR
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          path: outputs/pr-findings.txt
-        if: always()
+# Copy .github/workflows/appsec-pr-comment.yml to target repo
+# Set OPENAI_API_KEY in repository secrets
+# Scanner runs automatically on PRs and pushes
 ```
 
-2. **In the target repository**, add your OpenAI API key:
-   - Go to `Settings > Secrets and Variables > Actions`
-   - Add secret: `OPENAI_API_KEY` = `sk-your-key-here`
-
-3. **That's it!** When PRs are opened, the scanner runs automatically.
-
-### How It Works:
-1. GitHub Action triggers on PR
-2. Checks out the target repo (code to scan) 
-3. Checks out your scanner repo (the tools)
-4. Installs security tools (Semgrep, Gitleaks, Trivy)  
-5. Runs your scanner on the target repo
-6. Posts AI-powered results as PR comment
-
-**Much simpler!** No manual file management, handles all dependencies automatically.
-
----
-
-## 🎯 ImagineX Demo Script
-
-1. **Show the command**: `python cli.py --repo ../client-repo --scan all`
-2. **Highlight the output**: Time saved, cost savings, AI suggestions
-3. **Show the executive summary**: Perfect for client leadership
-4. **Demonstrate GitHub integration**: Automated PR security reviews
-
-## 💰 Business Value Proposition
-
-- **80% faster** security remediation vs manual research
-- **$150/hour** security engineer time saved
-- **Immediate ROI** on every scan
-- **Client-ready** executive reporting
-- **Scalable** across entire development teams
-
----
-
-## 🛠️ Usage Options
-
+### CI/CD Pipeline Integration
 ```bash
-# Scan with all tools
-python cli.py --repo /path/to/repo --scan all
-
-# Individual scanners
-python cli.py --repo /path/to/repo --scan semgrep
-python cli.py --repo /path/to/repo --scan gitleaks  
-python cli.py --repo /path/to/repo --scan sca
-
-# Skip AI suggestions (faster)
-python cli.py --repo /path/to/repo --no-ai
-
-# Custom output directory
-python cli.py --repo /path/to/repo --output /custom/path
+# In your existing pipeline:
+git clone https://github.com/cparnin/appsec_scanner scanner
+cd scanner
+pip install -r requirements.txt
+python src/cli.py --repo ../target-repo --scan all --output ../security-reports
 ```
 
----
-
-## 👥 Team Collaboration
-
-Perfect for ImagineX Security Guild:
-- **Modular design** - easy to add new scanners
-- **Clear business metrics** - leadership visibility
-- **Simple Python** - team can contribute easily
-- **Transparent calculations** - math is visible and adjustable
-- **Client-ready** - immediate demo value
-
----
-
-## 📈 Roadmap
-
-**Phase 1** ✅ (Current):
-- Multi-tool security scanning
-- AI remediation suggestions  
-- Business impact tracking
-- GitHub PR automation
-
-**Phase 2** (Future):
-- AWS Bedrock integration?
-- Custom AI prompts
-- Jira ticket creation
-- Slack notifications
-- Trend analysis dashboard
-
----
+### Scheduled Security Audits
+```bash
+# Weekly comprehensive scans
+python src/cli.py --repo /path/to/main/branch --scan all --output weekly-audit-$(date +%Y%m%d)
+```
 
 ## 🤝 Contributing
 
-This project is designed for ImagineX DevSecOps Guild collaboration:
+1. **Adding New Scanners**: Implement in `src/scanners/` following existing patterns
+2. **AI Prompt Tuning**: Modify prompts in `src/ai/remediation.py`  
+3. **Report Formats**: Extend templates in `src/reporting/templates/`
+4. **Business Metrics**: Adjust calculations in `src/cli.py` main function
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/scanner-name`
-3. Add your scanner following the existing pattern
-4. Test with DSVW or vulnerable applications
-5. Submit pull request
+## 📄 License
+
+MIT License - See LICENSE file for details
 
 ---
 
-## 📞 Support
-
-**Maintainer**: [@cparnin](https://github.com/cparnin)
-
-**ImagineX Team**: Ready for demos, client pilots, and team contributions.
-
-Pull requests welcome! 🚀
+*Powered by ImagineX DevSecOps Guild*

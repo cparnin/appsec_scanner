@@ -157,9 +157,9 @@ def main():
         # STEP 3: Generate AI remediation suggestions
         if not args.no_ai:
             logger.info("🤖 Generating AI remediation suggestions...")
-            total_findings = sum(len(findings) for findings in results.values())
+            total_findings_before_ai = sum(len(findings) for findings in results.values())
             
-            if total_findings > 0:
+            if total_findings_before_ai > 0:
                 # Process each tool's findings through AI
                 for tool, findings in results.items():
                     if findings:
@@ -195,9 +195,19 @@ def main():
         # STEP 4: Calculate business impact metrics
         # These calculations provide leadership with concrete ROI numbers
         total_findings = sum(len(findings) for findings in results.values())
+        
+        # Count AI suggestions from the FILTERED results (not all findings)
         ai_suggestions = sum(1 for tool_findings in results.values() 
                             for finding in tool_findings 
-                            if finding.get('ai_remediation') and finding['ai_remediation'] != 'N/A')
+                            if finding.get('ai_remediation') and 
+                            finding['ai_remediation'] not in ['N/A', 'No API key configured - unable to generate AI suggestions.', 
+                                                             'Network error - unable to get AI suggestion.',
+                                                             'API response format error - unable to parse suggestion.',
+                                                             'Unexpected error - unable to get AI suggestion.',
+                                                             'AI response was incomplete for this finding.'])
+        
+        # Debug logging for AI suggestions
+        logger.info(f"📊 AI Suggestions: Found {ai_suggestions} valid AI suggestions out of {total_findings} filtered findings")
         
         # Business calculation assumptions (documented for transparency):
         # - Manual security research: 15 minutes per issue (research + fix)
@@ -351,9 +361,21 @@ def _write_pr_findings(results, output_dir, total_findings, ai_suggestions, time
     # Write to file for GitHub Action to pick up
     pr_file_path = output_dir / "pr-findings.txt"
     logger.info(f"📝 Writing PR findings to: {pr_file_path}")
-    logger.info(f"📝 PR content length: {len('\\n'.join(summary_lines))} characters")
-    pr_file_path.write_text("\\n".join(summary_lines))
+    
+    # Join with actual newlines, not escaped ones
+    pr_content = "\n".join(summary_lines)
+    logger.info(f"📝 PR content length: {len(pr_content)} characters")
+    
+    # Write the content
+    pr_file_path.write_text(pr_content)
     logger.info(f"📝 File written successfully: {pr_file_path.exists()}")
+    
+    # Debug: verify the file was written correctly
+    if pr_file_path.exists():
+        written_content = pr_file_path.read_text()
+        lines_count = len(written_content.splitlines())
+        logger.info(f"📝 Verification - Lines written: {lines_count}")
+        logger.info(f"📝 Verification - First 200 chars: {written_content[:200]}")
 
 def _write_executive_summary(results, output_dir, total_findings, ai_suggestions, time_saved, cost_savings, repo_path):
     """
