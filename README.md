@@ -2,7 +2,7 @@
 
 An appsec security scanner that combines industry-standard security tools with OpenAI-generated remediation suggestions.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### For PR Scanning
 1. Copy `.github/workflows/appsec-pr-comment.yml` to your target repository
@@ -24,14 +24,14 @@ cp env.example .env
 python src/cli.py --repo /path/to/target/repo --scan all --output outputs
 ```
 
-## 🔧 Scanner Tools
+##  Scanner Tools
 
 - **Semgrep**: Static Application Security Testing (SAST)
 - **Gitleaks**: Secret detection in git history  
 - **Trivy**: Software Composition Analysis (dependency vulnerabilities)
 - **OpenAI**: AI-generated remediation suggestions for each finding
 
-## 📊 Business Impact
+##  Business Impact
 
 The scanner provides concrete ROI metrics:
 - **Time Savings**: Reduces developer research from 15 min to 3 min per issue
@@ -39,7 +39,7 @@ The scanner provides concrete ROI metrics:
 - **AI Coverage**: Typically achieves 95%+ AI suggestion coverage
 - **Executive Reports**: Professional summaries for leadership/clients
 
-## 📝 Output Files
+##  Output Files
 
 - `pr-findings.txt` - GitHub PR comment (critical + secrets only)
 - `report.html` - Detailed technical report for developers
@@ -47,7 +47,7 @@ The scanner provides concrete ROI metrics:
 - `slack-executive-summary.txt` - Team communication format
 - `outputs/raw/` - Raw scanner outputs (JSON format)
 
-## 🔧 Configuration Options
+##  Configuration Options
 
 ```bash
 # Scanner selection
@@ -63,19 +63,6 @@ The scanner provides concrete ROI metrics:
 # Output control
 --output /path/to/dir  # Custom output directory
 ```
-
-## 🚨 Recent Fixes (v2.0)
-
-### Critical Issues Resolved
-- ✅ **PR Comment Formatting**: Fixed literal `\n` escape sequences
-- ✅ **AI Suggestions**: Fixed "N/A" issue - now shows specific remediation code
-- ✅ **Line Counting**: Proper newlines for GitHub Actions processing
-- ✅ **Results Consistency**: Clear filtering between PR comments and full reports
-
-### Performance Improvements  
-- **AI Coverage**: Now achieves 95%+ suggestion coverage
-- **Processing Speed**: Batch API calls reduce costs and latency
-- **Error Handling**: Graceful degradation when AI is unavailable
 
 ## 🔍 Understanding the Output
 
@@ -94,41 +81,6 @@ The scanner provides concrete ROI metrics:
 - **Format**: Professional markdown suitable for leadership
 - **Metrics**: Time saved, cost impact, security posture improvement
 
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-1. **"No AI suggestions" in PR comments**
-   - Check `OPENAI_API_KEY` is set in GitHub secrets
-   - Verify API key has sufficient credits
-   - Check Action logs for API errors
-
-2. **PR comment formatting issues**  
-   - Ensure latest version of `appsec-pr-comment.yml`
-   - Check `outputs/pr-findings.txt` has proper line breaks
-   - Validate content with `wc -l outputs/pr-findings.txt`
-
-3. **Scanner tool failures**
-   - Trivy: Requires network access for vulnerability database
-   - Semgrep: Needs repository content (not just shallow clones)
-   - Gitleaks: Requires git history for secret detection
-
-### Debug Commands
-
-```bash
-# Test locally first
-python src/cli.py --repo /path/to/test/repo --scan all --ai-batch-size 5
-
-# Check output files
-ls -la outputs/
-wc -l outputs/pr-findings.txt
-grep -c "💡" outputs/pr-findings.txt  # Count AI suggestions
-
-# Validate scanner tools
-semgrep --version
-gitleaks version  
-trivy version
-```
 
 ## 📈 Integration Examples
 
