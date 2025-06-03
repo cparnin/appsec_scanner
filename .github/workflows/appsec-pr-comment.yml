@@ -20,7 +20,7 @@ jobs:
       - name: Checkout Scanner Repository  
         uses: actions/checkout@v4
         with:
-          repository: cparnin/appsec_scanner
+          repository: imaginexconsulting/appsec_scanner
           path: scanner
 
       - name: Install Python & Dependencies
@@ -59,147 +59,58 @@ jobs:
           GITLEAKS_BIN: ${{ steps.gitleaks_install.outputs.gitleaks-bin }}
         run: |
           cd scanner/src
-          # Copy Trivy results to expected location within scanner directory
           mkdir -p ../outputs/raw
           cp ../../trivy-results.json ../outputs/raw/
-          # Run scanner with output to scanner/outputs (not ../../outputs)
           python cli.py --repo ../../target-repo --scan all --output ../outputs
         continue-on-error: true
 
       - name: Debug Scanner Results
         run: |
-          echo "=== Current Directory ==="
-          pwd
-          echo "=== All Files ==="
-          ls -la
           echo "=== Scanner Outputs Analysis ==="
           if [ -d scanner/outputs ]; then
             echo "Found scanner/outputs directory"
             ls -la scanner/outputs/
             
             if [ -f scanner/outputs/pr-findings.txt ]; then
-              echo "=== PR Findings File Analysis ==="
               echo "File size: $(wc -c < scanner/outputs/pr-findings.txt) bytes"
               echo "Line count: $(wc -l < scanner/outputs/pr-findings.txt) lines"
-              echo "Character analysis:"
-              head -1 scanner/outputs/pr-findings.txt | od -c | head -3
-              echo "First 500 characters:"
-              head -c 500 scanner/outputs/pr-findings.txt
-              echo -e "\n\n=== AI Suggestions Analysis ==="
-              grep -c "💡" scanner/outputs/pr-findings.txt || echo "No AI suggestions found"
-              echo "Lines with N/A:"
-              grep -n "N/A" scanner/outputs/pr-findings.txt | head -5 || echo "No N/A found"
-            else
-              echo "No pr-findings.txt found in scanner/outputs"
+              echo "AI suggestions: $(grep -c "💡" scanner/outputs/pr-findings.txt || echo "0")"
             fi
-            
-            if [ -d scanner/outputs/raw ]; then
-              echo "=== Raw Scanner Files ==="
-              ls -la scanner/outputs/raw/
-              echo "=== Scanner Result Counts ==="
-              if [ -f scanner/outputs/raw/semgrep.json ]; then
-                echo "Semgrep findings: $(jq length scanner/outputs/raw/semgrep.json 2>/dev/null || echo 'Failed to parse JSON')"
-              fi
-              if [ -f scanner/outputs/raw/gitleaks.json ]; then
-                echo "Gitleaks findings: $(jq length scanner/outputs/raw/gitleaks.json 2>/dev/null || echo 'Failed to parse JSON')"
-              fi
-              if [ -f scanner/outputs/raw/trivy-sca.json ]; then
-                echo "Trivy findings count check..."
-                jq -r '.Results[]?.Vulnerabilities[]? | length' scanner/outputs/raw/trivy-sca.json 2>/dev/null | wc -l || echo "Failed to count Trivy findings"
-              fi
-            fi
-          else
-            echo "No scanner/outputs directory found"
           fi
 
-      - name: Prepare PR Comment with Validation
+      - name: Prepare PR Comment
         run: |
-          # Create outputs directory and copy scanner results
           mkdir -p outputs
           
-          # First, check if we have valid scanner results
           if [ -f scanner/outputs/pr-findings.txt ] && [ -s scanner/outputs/pr-findings.txt ]; then
-            echo "✅ Found valid scanner pr-findings.txt"
-            
-            # Validate the content isn't just whitespace
-            if grep -q "[^[:space:]]" scanner/outputs/pr-findings.txt; then
-              echo "✅ File contains actual content"
-              cp scanner/outputs/pr-findings.txt outputs/
-              
-              echo "📊 Final PR Comment Statistics:"
-              echo "File size: $(wc -c < outputs/pr-findings.txt) bytes"
-              echo "Line count: $(wc -l < outputs/pr-findings.txt) lines"
-              echo "Word count: $(wc -w < outputs/pr-findings.txt) words"
-              
-              # Check for common issues
-              if grep -q "\\\\n" outputs/pr-findings.txt; then
-                echo "⚠️  WARNING: Found literal \\n sequences in output"
-              fi
-              
-              if grep -q "N/A" outputs/pr-findings.txt; then
-                echo "⚠️  WARNING: Found N/A AI suggestions"
-                echo "Lines with N/A: $(grep -c 'N/A' outputs/pr-findings.txt)"
-              fi
-              
-              ai_count=$(grep -c "💡" outputs/pr-findings.txt || echo "0")
-              echo "💡 AI suggestions found: $ai_count"
-              
-            else
-              echo "❌ File exists but contains only whitespace"
-              echo "Creating fallback content..."
-            fi
+            echo "✅ Using scanner pr-findings.txt"
+            cp scanner/outputs/pr-findings.txt outputs/
           else
-            echo "❌ No valid scanner pr-findings.txt found"
-            echo "Scanner outputs debug:"
-            ls -la scanner/outputs/ 2>/dev/null || echo "No scanner/outputs directory"
-            echo "Creating fallback content..."
-          fi
+            echo "📝 Creating fallback PR comment"
+            cat > outputs/pr-findings.txt << 'EOFMARKER'
+          ## Security Scan Results
           
-          # Create fallback if needed
-          if [ ! -f outputs/pr-findings.txt ] || [ ! -s outputs/pr-findings.txt ]; then
-            cat > outputs/pr-findings.txt << 'EOF'
-## Security Scan Results
-
-The AppSec Scanner has completed its analysis of this repository.
-
-### Scanner Status
-- Semgrep SAST Analysis
-- Gitleaks Secret Detection  
-- Trivy SCA Analysis
-
-### Results
-Detailed security findings have been generated and are available in the workflow artifacts.
-
-### Next Steps
-1. Review the findings in the detailed reports
-2. Implement the AI-generated remediation suggestions  
-3. Re-run the scanner to verify fixes
-
-Powered by AppSec AI Scanner
-EOF
-            echo "📝 Created fallback PR comment"
-          fi
+          The AppSec Scanner has completed its analysis of this repository.
           
-          echo "=== Final PR Comment Preview ==="
-          echo "First 1000 characters:"
-          head -c 1000 outputs/pr-findings.txt
-          echo -e "\n\n=== End Preview ==="
+          ### Scanner Status
+          - Semgrep SAST Analysis
+          - Gitleaks Secret Detection  
+          - Trivy SCA Analysis
+          
+          ### Results
+          Detailed security findings have been generated and are available in the workflow artifacts.
+          
+          ### Next Steps
+          1. Review the findings in the detailed reports
+          2. Implement the AI-generated remediation suggestions  
+          3. Re-run the scanner to verify fixes
+          
+          Powered by AppSec AI Scanner
+          EOFMARKER
+          fi
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: outputs/pr-findings.txt
-          # NOTE: This action UPDATES the same comment each time (prevents spam)
-          # If you want separate comments for each run, use this instead:
-          # uses: actions/github-script@v6
-          # with:
-          #   script: |
-          #     const fs = require('fs');
-          #     const comment = fs.readFileSync('outputs/pr-findings.txt', 'utf8');
-          #     github.rest.issues.createComment({
-          #       issue_number: context.issue.number,
-          #       owner: context.repo.owner,
-          #       repo: context.repo.repo,
-          #       body: comment
-          #     });

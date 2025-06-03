@@ -1,6 +1,7 @@
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def generate_html_report(results, output_dir, repo_path=None):
         )
         
         # Write HTML report
-        report_path = output_dir / "report.html"
+        report_path = output_dir / f"report.html"
         report_path.write_text(html_content)
         logger.info(f"HTML report generated: {report_path}")
         
