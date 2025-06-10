@@ -129,13 +129,14 @@ def batch_suggest_remediation(findings: List[Dict[str, Any]], batch_size: int = 
             # Parse numbered responses from AI
             answers = []
             for line in content.split("\n"):
-                # Look for numbered list items (1. or 1))
-                if line.strip() and (line.strip()[0].isdigit() and line.strip()[1] in [".", ")"]):
-                    # Extract the content after the number
-                    answers.append(line[line.find('.')+1:].strip())
+                stripped = line.strip()
+                # Look for numbered list items like "1." or "1)" safely
+                if re.match(r"^\d[.)]", stripped):
+                    # Extract text after the number and delimiter
+                    answers.append(stripped[2:].strip())
                 elif answers:
                     # If we're already collecting an answer, this might be a continuation
-                    answers[-1] += " " + line.strip()
+                    answers[-1] += " " + stripped
             
             # Assign AI suggestions to findings
             for idx, finding in enumerate(batch):
