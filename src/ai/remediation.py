@@ -102,7 +102,7 @@ def batch_suggest_remediation(findings: List[Dict[str, Any]], batch_size: int = 
     # OpenAI API configuration
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     endpoint = "https://api.openai.com/v1/chat/completions"
-    model = "gpt-4o-mini"  # Cost-effective model that's good for code suggestions
+    model = "gpt-4.1-mini"  # GPT‑4o Mini: input $0.15, output $0.60 | GPT‑4.1 Mini: input $0.40, output $1.60
 
     # Process findings in batches to optimize costs and API limits
     for i in range(0, len(findings), batch_size):
